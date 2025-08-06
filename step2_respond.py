@@ -1,30 +1,55 @@
 import requests
+import os
+from dotenv import load_dotenv
 
-# Global variable to store conversation history
+# Load environment variables from .env file
+load_dotenv()
+
+# Global conversation history
 conversation_history = [
     {"role": "system", "content": "You are a persuasive sales assistant."}
 ]
 
+# Load API key securely
+api_key = os.getenv("OPENROUTER_API_KEY")
+if not api_key:
+    raise ValueError("Missing OpenRouter API key. Make sure .env file contains OPENROUTER_API_KEY.")
+
 def get_ai_reply(prompt):
     global conversation_history
 
-    # Add user's input to conversation history
     conversation_history.append({"role": "user", "content": prompt})
 
     headers = {
-        "Authorization": "Bearer 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",  # Replace with your key
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
 
     data = {
         "model": "mistralai/mixtral-8x7b-instruct",
         "messages": conversation_history,
+        "max_tokens": 150
     }
 
-    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
+    try:
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
+        response.raise_for_status()
+        result = response.json()
 
-    # Extract and save assistant's reply
-    reply = response.json()["choices"][0]["message"]["content"]
-    conversation_history.append({"role": "assistant", "content": reply})
+        if "choices" not in result:
+            print("[ERROR] Unexpected response format:")
+            print(result)
+            return "Sorry, I couldn't understand your request."
 
-    return reply
+        reply = result["choices"][0]["message"]["content"]
+        conversation_history.append({"role": "assistant", "content": reply})
+        return reply
+
+    except requests.exceptions.RequestException as e:
+        print("[ERROR] Network or HTTP error:", e)
+        return "Sorry, there was a problem connecting to the AI service."
+
+    except Exception as e:
+        print("[ERROR] General failure:", e)
+        print("[DEBUG] Raw response:", response.text)
+        return "Sorry, something went wrong while generating a reply."
