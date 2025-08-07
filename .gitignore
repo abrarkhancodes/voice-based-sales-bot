@@ -2,3 +2,5 @@
 env1/
 *.wav
 *.mp3
+__pycache__/
+*.pyc
