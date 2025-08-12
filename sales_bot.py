@@ -4,8 +4,8 @@ import numpy as np
 import scipy.io.wavfile as wav
 import time
 
-from step2_respond import get_ai_reply
-from step3_speak import speak
+from bot_response import get_ai_reply
+from user_response import speak
 
 # Load Whisper model once (outside the loop for efficiency)
 model = whisper.load_model("base")
@@ -29,27 +29,35 @@ def main():
 
     # Sales bot personality and context introduction
     sales_context = """
-    You are an enthusiastic and knowledgeable AI sales representative for TechSolutions Inc.
-    We sell cutting-edge software solutions including:
-    1. AI-powered analytics tools ($2,000-$10,000/month)
-    2. Cloud infrastructure services ($500-$5,000/month)
-    3. Custom software development ($50,000-$200,000 per project)
-    4. IT consulting services ($200/hour)
+    You are an enthusiastic, persuasive, and highly knowledgeable AI sales representative for TechSolutions Inc.
+    Your primary goal is to actively sell our services while building trust and understanding the customer's needs.
+
+    We sell:
+    1. AI-powered analytics tools ($2,000 to $10,000/month) – helps businesses make data-driven decisions faster.
+    2. Cloud infrastructure services ($500 to $5,000/month) – secure, scalable, and cost-efficient cloud hosting.
+    3. Custom software development ($50,000 to $200,000/project) – tailored solutions for unique business needs.
+    4. IT consulting services ($200 per hour) – expert advice to optimize tech strategy.
 
     Your goals:
-    - Build rapport with potential customers
-    - Understand their business needs
-    - Recommend appropriate solutions
-    - Handle objections professionally
-    - Guide them toward making a purchase decision
+    - Actively pitch relevant services based on customer needs
+    - Highlight benefits and unique selling points
+    - Share pricing and explain value clearly
+    - Handle objections with confidence
+    - Ask questions that lead toward a purchase
+    - Encourage decision-making in a friendly, helpful way
 
-    Keep responses conversational, engaging, and under 3 sentences.
-    Always ask follow-up questions to understand their needs better.
-    Be helpful and solution-oriented.
+    Keep responses under 3 sentences but persuasive and engaging.
+    Always end your response with a follow-up sales question unless the user is ending the conversation.
+    If they ask about a service, provide details and benefits without overwhelming them.
     """
 
     # Initial welcome message (speak once)
-    welcome_message = "Hello! Welcome to TechSolutions Inc. I'm your AI sales assistant. How can I help you find the perfect technology solution for your business today?"
+    welcome_message = (
+        "Hello! Welcome to TechSolutions Inc. "
+        "I’m your AI sales assistant. "
+        "We offer powerful AI analytics, secure cloud services, custom software, and expert IT consulting. "
+        "What challenges is your business currently facing so I can recommend the perfect solution?"
+    )
     print("🤖 AI: " + welcome_message)
     speak(welcome_message)
 
@@ -62,14 +70,14 @@ def main():
             user_input = transcribe_audio()
             print("📝 You said:", user_input)
 
-            # Exit condition
-            if user_input.lower() in ["exit", "quit", "bye"]:
+            # Exit condition (checks anywhere in sentence)
+            if any(word in user_input.lower() for word in ["exit", "quit", "bye"]):
                 print("👋 Ending conversation. Goodbye!")
-                speak("Thank you for your time! Have a great day!")
+                speak("Thank you for your time! I hope we can work together soon. Goodbye!")
                 break
 
-            # Step 3: Get AI reply
-            reply = get_ai_reply(user_input)
+            # Step 3: Get AI reply with sales context
+            reply = get_ai_reply(f"{sales_context}\nCustomer: {user_input}")
             print("🤖 AI Reply:", reply)
 
             # Step 4: Speak AI reply

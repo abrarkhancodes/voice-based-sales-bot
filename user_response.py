@@ -3,14 +3,14 @@ import os
 import platform
 
 def speak(text):
-    # 📢 Generate speech (fast by setting slow=False)
+    
     tts = gTTS(text=text, lang='en', slow=False)
     tts.save("reply.mp3")
 
-    # 🔊 Play audio based on the OS
+    #  Play audio based on the OS
     system = platform.system()
 
-    if system == "Darwin":  # macOS
+    if system == "Darwin":  
         os.system("afplay reply.mp3")
     elif system == "Windows":
         os.system("start reply.mp3")
